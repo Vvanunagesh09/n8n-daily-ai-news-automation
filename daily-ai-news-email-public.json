@@ -1,0 +1,103 @@
+{
+  "name": "Daily AI News Email",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "8e6bbfc2-0c13-44ee-872c-5f4fb8dc8e4b",
+      "name": "Every Morning 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/trudax~reddit-scraper-lite/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpTemplatedCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"startUrls\":[{\"url\":\"https://www.reddit.com/r/artificial/top/?t=day\"}],\"maxItems\":5,\"maxPostCount\":5,\"skipComments\":true,\"skipCommunity\":true,\"skipUserPosts\":true,\"proxy\":{\"useApifyProxy\":true,\"apifyProxyGroups\":[\"RESIDENTIAL\"]}}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "2b7938ea-4dc1-42fd-8bbd-8d7aa9a135ba",
+      "name": "Get Reddit AI Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@gmail.com",
+        "subject": "=Top AI news today - {{ $now.toFormat(\"dd LLL yyyy\") }}",
+        "message": "=<h3>Top AI news today</h3>\n<ol>{{ $(\"Get Reddit AI Posts\").all().filter(item => item.json.title).slice(0, 5).map(item => \"<li><a href='\" + (item.json.url || \"#\") + \"'>\" + String(item.json.title || \"No title\") + \"</a></li>\").join(\"\") }}</ol>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "ebdaad74-3c93-4623-9597-62285d4746e5",
+      "name": "Send AI News Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        304
+      ],
+      "executeOnce": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every Morning 8AM": {
+      "main": [
+        [
+          {
+            "node": "Get Reddit AI Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reddit AI Posts": {
+      "main": [
+        [
+          {
+            "node": "Send AI News Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Asia/Dubai",
+    "availableInMCP": true
+  },
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
